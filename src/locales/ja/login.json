@@ -1,0 +1,26 @@
+{
+  "page": {
+    "title": "ログイン",
+    "subtitle": "続行するにはログインしてください"
+  },
+  "forms": {
+    "username": {
+      "label": "ユーザー名",
+      "placeholder": "ユーザー名を入力してください",
+      "required": "ユーザー名を入力してください",
+      "maxLength": "ユーザー名は255文字以内で入力してください"
+    },
+    "password": {
+      "label": "パスワード",
+      "placeholder": "パスワードを入力してください",
+      "required": "パスワードを入力してください",
+      "minLength": "パスワードは8文字以上で入力してください"
+    }
+  },
+  "buttons": {
+    "login": "ログイン"
+  },
+  "links": {
+    "forgotPassword": "パスワードをお忘れですか？"
+  }
+}
