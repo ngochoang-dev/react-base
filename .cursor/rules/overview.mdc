@@ -1,0 +1,128 @@
+---
+alwaysApply: true
+---
+
+# Overview Dự Án
+
+**PIS (Pathology Information System)** - Hệ thống thông tin bệnh lý học, ứng dụng frontend quản lý và xem hình ảnh y tế.
+
+## Công nghệ chính
+
+- **React 18** + **TypeScript** + **Vite**
+- **shadcn UI** - UI component library
+- **React Query (TanStack Query)** - Data fetching & caching
+- **React Router v6** - Routing với protected routes
+- **React Hook Form** + **Yup** - Form validation
+- **Axios** - HTTP client
+- **i18next** - Đa ngôn ngữ (ja)
+
+## Quy tắc ngôn ngữ
+
+- **Text hiển thị (UI Text)**: Tất cả text hiển thị cho người dùng phải sử dụng **tiếng Nhật (Japanese)**. Text này được quản lý thông qua i18n trong thư mục `src/locales/ja/`. Khi tạo component hoặc trang mới, luôn sử dụng `useTranslation` để lấy text từ i18n, không hardcode text tiếng Nhật trực tiếp trong component.
+
+- **Code Comments**: Tất cả comment trong code phải sử dụng **tiếng Anh (English)**. Điều này bao gồm:
+  - Inline comments trong code
+  - JSDoc comments
+  - Block comments
+  - TODO comments
+  - Comment giải thích logic, function, component
+
+**Ví dụ**:
+
+```typescript
+// ✅ Correct: Comment in English
+// Calculate total price including tax
+const totalPrice = price * (1 + taxRate);
+
+// ❌ Wrong: Comment in Japanese
+// 税込み価格を計算する
+const totalPrice = price * (1 + taxRate);
+```
+
+```typescript
+// ✅ Correct: UI text from i18n (Japanese)
+const { t } = useTranslation('login');
+return <Button>{t('buttons.login')}</Button>; // Will display: ログイン
+
+// ❌ Wrong: Hardcoded Japanese text
+return <Button>ログイン</Button>;
+```
+
+## Cấu trúc dự án
+
+```
+src
+├── assets
+│   ├── svg -> Chứa file svg
+│   └── images -> Chứa file ảnh
+│
+├── components
+│   ├── layout -> Chứa layout
+│   │   └── main-layout.tsx
+│   ├── ui -> Chứa shadcn UI components (thêm bằng command)
+│   └── ui-parts -> Chứa component dùng chung (tạo từ ui component)
+│
+├── constants -> Application constants
+│   └── reg-exp.ts
+│
+├── contexts -> Global context
+│   └── permission-context.tsx
+│
+├── hooks -> Global hooks
+│
+├── lib -> Config của thư viện hoặc custom
+│   ├── axios.ts -> Axios instance configuration
+│   ├── query.ts -> React Query setup
+│   ├── local-store.ts -> Local storage utilities
+│   └── utils.ts -> General utilities
+│
+├── locales -> Đa ngôn ngữ
+│   ├── ja -> Japanese translations
+│   └── index.ts -> i18n configuration
+│
+├── pages -> Khởi tạo trang
+│   └── profile -> Trang cá nhân (ví dụ)
+│       ├── api -> API calls của trang
+│       │   └── get-me.ts
+│       ├── components -> Chứa các component riêng (nếu có) của trang
+│       ├── hooks -> Chứa các hook riêng (nếu có) của trang
+│       └── index.tsx -> Component chính của trang
+│
+├── router -> Config route
+│   ├── index.tsx -> Import lazy page
+│   ├── protected-route.tsx -> Bảo vệ route khi chưa đăng nhập hoặc không có quyền
+│   └── routes.tsx -> Định nghĩa các url
+│
+├── theme
+│   └── index.ts -> Config theme
+│
+├── types -> Định nghĩa type
+│
+├── utils -> Utility functions
+│
+├── app.tsx -> Root component
+└── main.tsx -> Entry point
+```
+
+### Quy tắc tổ chức code
+
+- **Pages**: Mỗi trang có thư mục riêng với `index.tsx`. Có thể có thư mục `api/`, `components/`, `hooks/`, `utils/` riêng nếu cần.
+
+- **Components**:
+  - `layout/` - Layout components
+  - `ui/` - Base UI components (shadcn UI)
+  - `ui-parts/` - Composite components dùng chung, được tạo từ các UI components
+
+- **Hooks**:
+  - Global hooks đặt ở `src/hooks/`
+  - Hooks riêng của trang đặt ở `src/pages/{page}/hooks/`
+
+- **API**:
+  - API calls riêng của trang đặt ở `src/pages/{page}/api/`
+
+- **Components riêng**:
+  - Components chỉ dùng trong một trang đặt ở `src/pages/{page}/components/`
+
+- **Quy tắc chung**:
+  - Mỗi file chỉ nên chứa 1 component
+  - Các hàm không phụ thuộc component sẽ tách ra file utils riêng hoặc chung

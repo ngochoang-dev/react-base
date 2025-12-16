@@ -1,0 +1,289 @@
+---
+alwaysApply: true
+---
+
+# Hướng Dẫn Khởi Tạo Trang Mới
+
+## Quy tắc chung
+
+- Mỗi trang có thư mục riêng trong `src/pages/`
+- File chính của trang là `index.tsx`
+- Có thể có các thư mục con: `api/`, `components/`, `hooks/` nếu cần
+- Luôn sử dụng i18n cho text hiển thị
+- Trang cần được đăng ký trong `src/router/routes.tsx`
+
+## Các bước khởi tạo trang
+
+### Bước 1: Tạo thư mục và file index.tsx
+
+Tạo thư mục mới trong `src/pages/{page-name}/` và file `index.tsx`:
+
+```typescript
+import { useTranslation } from 'react-i18next';
+
+const {PageName} = () => {
+  const { t } = useTranslation('{page-name}');
+
+  return (
+    <div>
+      {/* Nội dung trang */}
+    </div>
+  );
+};
+
+export default {PageName};
+```
+
+**Lưu ý**: Thay `{PageName}` và `{page-name}` bằng tên trang thực tế (ví dụ: `UserList`, `user-list`)
+
+### Bước 2: Tạo file i18n
+
+Tạo file JSON cho tiếng Nhật:
+
+**`src/locales/ja/{page-name}.json`**:
+
+```json
+{
+  "page": {
+    "title": "ページタイトル",
+    "subtitle": "ページの説明"
+  },
+  "forms": {
+    // Nếu có form, thêm schema validation messages ở đây
+  },
+  "buttons": {
+    // Các nút bấm
+  }
+}
+```
+
+**Đăng ký namespace trong `src/locales/index.ts`**:
+
+Thêm import và vào resources:
+
+```typescript
+import { pageName } from './ja/{page-name}.json';
+
+const resources = {
+  ja: {
+    common,
+    login,
+    home,
+    '{page-name}': { pageName }, // Thêm dòng này
+  },
+} as const;
+```
+
+### Bước 3: Thêm route vào routes.tsx
+
+Thêm route mới vào `src/router/routes.tsx`:
+
+```typescript
+import {PageName} from '@/pages/{page-name}';
+import MainLayout from '@/components/layout/main-layout';
+
+export const routes = [
+  // ... các route khác
+  {
+    name: '{PageName}',
+    title: '{page-name}:page.title',
+    description: '{page-name}:page.description',
+    path: '/{page-path}',
+    element: (
+      <MainLayout>
+        <{PageName} />
+      </MainLayout>
+    ),
+    requiresAuth: true, // hoặc false tùy trang
+  },
+  // ...
+];
+```
+
+**Lưu ý**:
+
+- `requiresAuth: true` - Trang yêu cầu đăng nhập
+- `requiresAuth: false` - Trang công khai
+
+### Bước 4: Tạo API (nếu cần)
+
+Nếu trang cần gọi API, tạo file trong `src/pages/{page-name}/api/`:
+
+**Ví dụ: `src/pages/{page-name}/api/get-list.ts`**:
+
+```typescript
+import api from '@/lib/axios';
+import type { QueryConfig } from '@/lib/query';
+import { useQuery } from '@tanstack/react-query';
+
+type GetListParams = {
+  page?: number;
+  limit?: number;
+};
+
+const getList = async (params?: GetListParams) => {
+  const { data } = await api.get('/api/endpoint', { params });
+  return data;
+};
+
+type UseGetListType = {
+  queryConfig?: QueryConfig<typeof getList>;
+  params?: GetListParams;
+};
+
+export const useGetList = ({ queryConfig, params }: UseGetListType = {}) => {
+  return useQuery({
+    queryKey: ['{page-name}', 'list', params],
+    queryFn: () => getList(params),
+    ...queryConfig,
+  });
+};
+```
+
+**Ví dụ: `src/pages/{page-name}/api/create.ts`** (Mutation):
+
+```typescript
+import api from '@/lib/axios';
+import type { MutationConfig } from '@/lib/query';
+import { useMutation } from '@tanstack/react-query';
+
+type CreatePayload = {
+  name: string;
+  // ... các field khác
+};
+
+const create = async (payload: CreatePayload) => {
+  const { data } = await api.post('/api/endpoint', payload);
+  return data;
+};
+
+type UseCreateType = {
+  mutationConfig?: MutationConfig<typeof create>;
+};
+
+export const useCreate = ({ mutationConfig }: UseCreateType = {}) => {
+  return useMutation({
+    ...mutationConfig,
+    mutationFn: create,
+  });
+};
+```
+
+### Bước 5: Tạo Form (nếu cần)
+
+Nếu trang có form, tham khảo `form-guide.mdc`:
+
+1. Tạo schema trong `src/types/{page-name}.ts`
+2. Sử dụng React Hook Form + Yup
+3. Sử dụng `useBlocker` để cảnh báo khi rời trang
+4. Sử dụng shadcn UI Form components
+
+**Ví dụ**:
+
+```typescript
+import { useForm } from 'react-hook-form';
+import { {pageName}FormSchema, type {PageName}FormType } from '@/types/{page-name}';
+import { yupResolver } from '@hookform/resolvers/yup';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import useBlocker from '@/hooks/useBlocker';
+import { useTranslation } from 'react-i18next';
+
+const { t } = useTranslation('{page-name}');
+
+const form = useForm<{PageName}FormType>({
+  resolver: yupResolver({pageName}FormSchema()),
+  defaultValues: {
+    // default values
+  },
+});
+
+const { formState: { isDirty } } = form;
+
+const onSubmit = (data: {PageName}FormType) => {
+  console.log(data);
+};
+
+useBlocker(isDirty, 'Bạn có chắc chắn muốn rời khỏi trang này?');
+```
+
+### Bước 6: Tạo Components riêng (nếu cần)
+
+Nếu trang có components chỉ dùng trong trang đó, tạo trong `src/pages/{page-name}/components/`:
+
+```typescript
+// src/pages/{page-name}/components/custom-component.tsx
+
+export const CustomComponent = () => {
+  return <div>Custom Component</div>;
+};
+```
+
+### Bước 7: Tạo Hooks riêng (nếu cần)
+
+Nếu trang có hooks chỉ dùng trong trang đó, tạo trong `src/pages/{page-name}/hooks/`:
+
+```typescript
+// src/pages/{page-name}/hooks/use-custom-logic.ts
+import { useState } from 'react';
+
+export const useCustomLogic = () => {
+  const [state, setState] = useState();
+
+  // Custom logic here
+
+  return { state, setState };
+};
+```
+
+## Ví dụ hoàn chỉnh
+
+### Trang đơn giản (không form, không API)
+
+**`src/pages/about/index.tsx`**:
+
+```typescript
+import { useTranslation } from 'react-i18next';
+
+const About = () => {
+  const { t } = useTranslation('about');
+
+  return (
+    <div className="p-4">
+      {/* Nội dung trang */}
+    </div>
+  );
+};
+
+export default About;
+```
+
+### Trang có API và Form
+
+Xem ví dụ chi tiết tại:
+
+- `src/pages/login/` - Trang có form và API
+- `src/pages/profile/` - Trang có API
+
+## Checklist
+
+Khi tạo trang mới, đảm bảo:
+
+- [ ] Đã tạo thư mục `src/pages/{page-name}/`
+- [ ] Đã tạo file `index.tsx`
+- [ ] Đã tạo file i18n `ja/{page-name}.json`
+- [ ] Đã đăng ký namespace trong `src/locales/index.ts` (nếu cần)
+- [ ] Đã thêm route vào `src/router/routes.tsx`
+- [ ] Đã tạo API files (nếu cần) trong `api/`
+- [ ] Đã tạo form schema và types (nếu có form) trong `src/types/`
+- [ ] Đã sử dụng `useBlocker` cho form (nếu có form)
+- [ ] Đã tạo components riêng (nếu cần) trong `components/`
+- [ ] Đã tạo hooks riêng (nếu cần) trong `hooks/`

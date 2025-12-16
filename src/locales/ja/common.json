@@ -1,1 +1,8 @@
-{}
+{
+  "forms": {
+    "leaveWarning": "このページを離れてもよろしいですか？"
+  },
+  "buttons": {
+    "loading": "処理中..."
+  }
+}

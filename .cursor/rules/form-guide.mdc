@@ -1,0 +1,134 @@
+---
+alwaysApply: true
+---
+
+# Form Guide
+
+## Quy tắc chung
+
+- **Validation**: Tất cả form sẽ sử dụng **React Hook Form** kết hợp với **Yup** để validate dữ liệu.
+
+- **UI Components**: Form sẽ sử dụng các component có sẵn của **shadcn UI** (Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input, Button, etc.).
+
+- **Form Blocker**: Luôn sử dụng hook `useBlocker` để cảnh báo người dùng khi họ cố gắng rời khỏi trang khi form đã có thay đổi (dirty). Sử dụng `isDirty` từ `formState` của React Hook Form làm điều kiện block.
+
+## Khi bắt đầu tạo form
+
+1. Tạo schema và file ở thư mục `@/src/types/{{entity}}.ts`
+
+**Lưu ý quan trọng**: Schema phải được định nghĩa dưới dạng **hàm** để đảm bảo i18n được load đúng cách khi validation chạy.
+
+Ví dụ:
+
+```typescript
+import * as yup from 'yup';
+import i18n from 'i18next';
+
+export const loginFormSchema = () => {
+  return yup.object({
+    username: yup
+      .string()
+      .trim()
+      .email(i18n.t('login:forms.email.valid'))
+      .required(i18n.t('login:forms.email.required'))
+      .max(255, i18n.t('login:forms.email.maxLength')),
+    password: yup
+      .string()
+      .required(i18n.t('login:forms.password.required'))
+      .min(8, i18n.t('login:forms.password.invalid', { min: 8 }))
+      .matches(/[A-Z]/, i18n.t('login:forms.password.invalid'))
+      .matches(/[a-z]/, i18n.t('login:forms.password.invalid'))
+      .matches(/[0-9]/, i18n.t('login:forms.password.invalid'))
+      .matches(/[!@#$%^&*(),.?":{}|<>]/, i18n.t('login:forms.password.invalid')),
+  });
+};
+
+export type LoginFormType = yup.InferType<ReturnType<typeof loginFormSchema>>;
+```
+
+**Lưu ý**:
+
+- Schema phải là một hàm trả về `yup.object()`
+- Sử dụng `i18n` từ `i18next` (không phải `t`)
+- Type được định nghĩa bằng `yup.InferType<ReturnType<typeof schemaFunction>>`
+
+2. Sử dụng trong component
+
+```typescript
+import { useForm } from 'react-hook-form';
+import { loginFormSchema, type LoginFormType } from '@/types/login';
+import { yupResolver } from '@hookform/resolvers/yup';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import useBlocker from '@/hooks/useBlocker';
+import { useTranslation } from 'react-i18next';
+
+const { t } = useTranslation('login');
+
+const form = useForm<LoginFormType>({
+  resolver: yupResolver(loginFormSchema()),
+  defaultValues: {
+    username: '',
+    password: '',
+  },
+});
+
+const { formState: { isDirty } } = form;
+
+const onSubmit = (data: LoginFormType) => {
+  console.log(data);
+};
+
+useBlocker(isDirty, 'Bạn có chắc chắn muốn rời khỏi trang này?');
+
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <FormField
+      control={form.control}
+      name="username"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{t('forms.username.label')}</FormLabel>
+          <FormControl>
+            <Input placeholder={t('forms.username.placeholder')} {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="password"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{t('forms.password.label')}</FormLabel>
+          <FormControl>
+            <Input type="password" placeholder={t('forms.password.placeholder')} {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <Button type="submit" className="w-full">
+      {t('buttons.login')}
+    </Button>
+  </form>
+</Form>
+```
+
+**Lưu ý**:
+
+- Sử dụng `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage` từ `@/components/ui/form`
+- Sử dụng `Input` từ `@/components/ui/input`
+- Sử dụng `Button` từ `@/components/ui/button`
+- Sử dụng `useTranslation` để lấy text từ i18n
+- Form được wrap trong `<Form {...form}>` component
+- Mỗi field sử dụng `FormField` với `render` prop để render input

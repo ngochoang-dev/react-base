@@ -1,0 +1,69 @@
+---
+alwaysApply: true
+---
+
+# i18n Guide
+
+## Quy tắc chung
+
+- **Cấu trúc file**: Mỗi trang sẽ tương ứng với 1 file JSON trong thư mục `src/locales/ja/`
+
+- **File ngôn ngữ**: Mỗi file JSON bao gồm tiếng Nhật (tương ứng trong thư mục `ja/`)
+
+- **File common.json**: Dùng để định nghĩa text dùng chung cho cả hệ thống. Nếu ở màn hình riêng mà có text dùng chung thì sẽ define ở `common.json`
+
+Ví dụ:
+
+```json
+// src/locales/ja/common.json
+{
+  "buttons": {
+    "save": "xxx",
+    "cancel": "xxx",
+    "delete": "xxx",
+    "edit": "xxx"
+  }
+}
+```
+
+## Cách sử dụng
+
+### Trong component - sử dụng `useTranslation`
+
+```typescript
+import { useTranslation } from 'react-i18next';
+
+const MyComponent = () => {
+  const { t } = useTranslation('login'); // 'login' là namespace tương ứng với file login.json
+
+  return (
+    <div>
+      <h1>{t('page.title')}</h1>
+      <p>{t('page.description')}</p>
+    </div>
+  );
+};
+```
+
+### Ngoài component - sử dụng `t` của i18next
+
+Khi sử dụng trong file types, schemas, hoặc các file không phải component:
+
+```typescript
+import { t } from 'i18next';
+
+export const loginFormSchema = yup.object({
+  username: yup
+    .string()
+    .trim()
+    .email(t('login:forms.email.valid'))
+    .required(t('login:forms.email.required'))
+    .max(255, t('login:forms.email.maxLength')),
+  password: yup
+    .string()
+    .required(t('login:forms.password.required'))
+    .min(8, t('login:forms.password.invalid', { min: 8 })),
+});
+```
+
+**Lưu ý**: Khi sử dụng `t` của i18next, cần chỉ định namespace theo format `namespace:key.path` (ví dụ: `login:forms.email.required`)
